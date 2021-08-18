@@ -3,9 +3,7 @@ import os
 import datetime
 import numpy as np
 from collections import namedtuple
-from pathlib import Path
-import pickle
-import time
+
 
 import experiments.Settings
 
@@ -39,7 +37,7 @@ def setup_env(conf):
     env.total_messages_received = 0
     env.finished = False
     env.entropy = numpy.zeros(int(conf["misc"]["num_target_packets"]))
-    env.collected_packets = []
+
     return env
 
 
@@ -172,26 +170,8 @@ def run_client_server(env, conf, net, loggers):
     env.process(SenderT1.simulate_adding_packets_into_buffer(recipient))
     print("> Started sending traffic for measurments")
 
-    # reste packet list
-    env.collected_packets = []
-
     env.run(until=env.stop_sim_event)  # Run until the stop_sim_event is triggered.
     print("> Main part of simulation finished. Starting cooldown phase.")
-
-    print("> Saving collected packets...")
-
-    packet_folder_path = "playground_experiment/packets"
-    Path(packet_folder_path).mkdir(exist_ok=True)
-
-    pkt_list_gen = env.collected_packets
-    pkt_list_info = [{"src": str(pkt.real_sender.id), "dst": str(pkt.dest.id), "time_sent": pkt.time_sent, "time_delivered": pkt.time_delivered} for pkt in pkt_list_gen]
-    print(pkt_list_info)
-
-    with open(packet_folder_path + "/packets-" + time.strftime("%Y%m%d-%H%M%S") + ".txt", 'w') as file_handler:
-        for item in pkt_list_info:
-            file_handler.write("{}\n".format(item))
-
-    print("> Done!")
 
     # Log entropy
     loggers[2].info(StructuredMessage(metadata=tuple(env.entropy)))
