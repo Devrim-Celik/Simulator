@@ -29,7 +29,7 @@
         }
       },
     "packet": {
-        "packet_size": 1500},
+        "packet_size": 1200},
     "message": {
         "min_msg_size": 2,
         "max_msg_size": 2,

@@ -2,3 +2,4 @@
 2. Also save target of alice
 3. also get id of alice
 4. MAIL PROB AND SIZES in MARKOV CHAIN
+5. Right now, only senderT1 sends proper packets; what about the others?
