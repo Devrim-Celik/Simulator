@@ -1,5 +1,21 @@
 import numpy as np
 
+TELEGRAM_TRANSITION_PROBABILITIES = np.array([
+    [0.40, 0.47, 0.10, 0.01, 0.02], # Text
+    [0.29, 0.53, 0.11, 0.02, 0.05], # Photo
+    [0.19, 0.36, 0.40, 0.02, 0.03], # Video
+    [0.17, 0.59, 0.13, 0.09, 0.02], # File
+    [0.14, 0.40, 0.10, 0.01, 0.35]  # Audio
+])
+
+TELEGRAM_AVG_SIZES_BYTES = [
+    306.61,
+    91.33 * 1000,
+    35.49 * 1000**2,
+    52.56 * 1000,
+    4.44 * 1000**2
+]
+
 class MarkovChain(object):
 
     def __init__(self, transition_matrix: np.ndarray, starting_state: int = 0):
