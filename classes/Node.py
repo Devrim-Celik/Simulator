@@ -183,6 +183,10 @@ class Node(object):
         '''
 
         packet.time_delivered = self.env.now
+
+        # add packet to the environment
+        self.env.collected_packets.append(packet)
+
         self.env.total_messages_received += 1
         # print(self.env.message_ctr)
 
