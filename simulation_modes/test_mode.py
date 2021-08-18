@@ -185,7 +185,6 @@ def run_client_server(env, conf, net, loggers):
 
     pkt_list_gen = env.collected_packets
     pkt_list_info = [{"src": str(pkt.real_sender.id), "dst": str(pkt.dest.id), "time_sent": pkt.time_sent, "time_delivered": pkt.time_delivered} for pkt in pkt_list_gen]
-    print(pkt_list_info)
 
     with open(packet_folder_path + "/packets-" + time.strftime("%Y%m%d-%H%M%S") + ".txt", 'w') as file_handler:
         for item in pkt_list_info:

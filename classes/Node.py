@@ -294,12 +294,14 @@ class Node(object):
         '''
         i = 0
 
-        # Note: if you want to send messages or larger size than a single packet this function must be updated
         while i < self.conf["misc"]["num_target_packets"]:
-
             yield self.env.timeout(float(self.rate_generating))
 
-            msg = Message.random(conf=self.conf, net=self.net, sender=self, dest=dest)  # New Message
+            #msg = Message.random(conf=self.conf, net=self.net, sender=self, dest=dest)  # New Message
+            # get message size according to selected sender model
+            msg_size = math.ceil(self.get_msg_size())
+            # create corresponding packet
+            msg = Message(conf=self.conf, net=self.net, payload=random_string(msg_size), real_sender=self, dest=dest)  # New Message
             current_time = self.env.now
             msg.time_queued = current_time  # The time when the message was created and placed into the queue
             for pkt in msg.pkts:
@@ -307,7 +309,7 @@ class Node(object):
                 pkt.probability_mass[i] = 1.0
             self.add_to_buffer(msg.pkts)
             self.env.message_ctr += 1
-            i += 1
+            i += len(msg.pkts)
         self.env.finished = True
 
 

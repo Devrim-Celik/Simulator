@@ -29,10 +29,11 @@
         }
       },
     "packet": {
-        "packet_size": 0},
+        "packet_size": 1500},
     "message": {
         "min_msg_size": 2,
-        "max_msg_size": 2},
+        "max_msg_size": 2,
+        "msg_type": "IM"},
     "mixnodes": {
 			"avg_delay": 0.1,
       "batch": false,

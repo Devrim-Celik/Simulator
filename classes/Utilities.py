@@ -5,7 +5,6 @@ import logging.handlers
 from experiments.Settings import *
 import json
 import numpy
-import sys
 from string import ascii_letters
 import random
 
