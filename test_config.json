@@ -33,7 +33,7 @@
     "message": {
         "min_msg_size": 2,
         "max_msg_size": 2,
-        "msg_type": "IM"},
+        "msg_type": "Mail"},
     "mixnodes": {
 			"avg_delay": 0.1,
       "batch": false,
