@@ -5,10 +5,15 @@ import numpy as np
 
 ### UTILITIES
 def load_packets(file_name = "playground_experiment/packets/packets-20210818-013834.txt"):
-    with open("playground_experiment/packets/packets-20210818-013834.txt", "r") as outfile:
+    with open(file_name, "r") as outfile:
         pkt_list_str = outfile.readlines()
-    pkt_list = [eval(dic_str) for dic_str in pkt_list_str]
-    return pkt_list
+    # get sender id
+    sender_id = pkt_list_str[0][:-1] # -1 for dropping \n
+    # get recipient ids
+    recipient_ids = eval(pkt_list_str[1])
+    # get packets
+    pkt_list = [eval(dic_str) for dic_str in pkt_list_str[2:]]
+    return sender_id, recipient_ids, pkt_list
 
 def simplify_ids(pkt_list):
     # get unique IDs and sort them alphabetically
@@ -22,7 +27,7 @@ def simplify_ids(pkt_list):
         pkt_dic["src"] = translation_dict[pkt_dic["src"]]
         pkt_dic["dst"] = translation_dict[pkt_dic["dst"]]
 
-    return pkt_list
+    return pkt_list, translation_dict
 
 ### CHERNOV BOUND
 def chernov_bound_erlang(mu, n, confidence) -> float:

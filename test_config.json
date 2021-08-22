@@ -9,7 +9,7 @@
     "phases":   {
         "burnin": 100,
         "execution": 500,
-        "cooldown": 2000},
+        "cooldown": 100},
     "network": {
         "topology" : "stratified",
         "cascade" : {
@@ -52,5 +52,8 @@
         "max_retransmissions":5},
     "misc": {
         "id_len": 32,
-        "num_target_packets": 1000}
+        "num_target_packets": 1000},
+    "security": {
+      "nr_target_recipients": 5
+    }
 }

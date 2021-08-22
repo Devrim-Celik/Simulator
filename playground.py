@@ -4,7 +4,7 @@ import os
 from metrics import anonymity_metrics
 import pandas as pd
 import json
-
+from sda import sda
 
 if __name__ == "__main__":
 
@@ -24,8 +24,11 @@ if __name__ == "__main__":
 			os.remove('./playground_experiment/logs/last_mix_entropy.csv')
 		except:
 			pass
-
-	test_mode.run(exp_dir='playground_experiment', conf_file=None, conf_dic=config)
+	# run
+	file_name = test_mode.run(exp_dir='playground_experiment', conf_file=None, conf_dic=config)
+	# sda
+	sda(file_name)
+	"""
 	throughput = test_mode.throughput
 
 	packetLogsDir = './playground_experiment/logs/packet_log.csv'
@@ -51,7 +54,7 @@ if __name__ == "__main__":
 	print(">> Overall latency: %f seconds (including mixing delay and packet cryptographic processing)" % (latency))
 	print(">> Throuhput of the network: %f [packets / second]" % throughput)
 	print("-------------------------------------------------------")
-
+	"""
 	# except Exception as e:
 		# print(e)
 		# print("Something went wrong! Check whether your input parameters are correct.")

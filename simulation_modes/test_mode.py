@@ -130,29 +130,19 @@ def run_client_server(env, conf, net, loggers):
     SenderT1.verbose = True
     print("Target Sender1: ", SenderT1.id)
 
-    SenderT2 = clients.pop()
-    SenderT2.label = 2
-    SenderT2.verbose = True
-    print("Target Sender2: ", SenderT2.id)
-
-    recipient = clients.pop()
-    recipient.verbose = True
-    print("Target Recipient: ", recipient.id)
-
     net.mixnodes[0].verbose = True
 
-    for c in clients:
+    for c_indx, c in enumerate(clients[1:]):
         c.verbose = True
-        env.process(c.start(random.choice(clients)))
+        # identify the recipients:
+        if c_indx < conf["security"]["nr_target_recipients"]:
+            print(f"Target Recipient {c_indx + 1}: ", c.id)
+            c.set_start_logs()
+        env.process(c.start(random.choice(clients))) # TODO: for now everyone only send to one person...
         env.process(c.start_loop_cover_traffc())
 
-    env.process(SenderT1.start(dest=recipient))
+    env.process(SenderT1.start(dest=clients[1:conf["security"]["nr_target_recipients"]+1]))
     env.process(SenderT1.start_loop_cover_traffc())
-    env.process(SenderT2.start(dest=random.choice(clients)))
-    env.process(SenderT2.start_loop_cover_traffc())
-    env.process(recipient.set_start_logs())
-    env.process(recipient.start(dest=random.choice(clients)))
-    env.process(recipient.start_loop_cover_traffc())
 
     print("---------" + str(datetime.datetime.now()) + "---------")
     print("> Running the system for %s ticks to prepare it for measurment." % (conf["phases"]["burnin"]))
@@ -169,7 +159,7 @@ def run_client_server(env, conf, net, loggers):
     for p in net.mixnodes:
         p.mixlogging = True
 
-    env.process(SenderT1.simulate_adding_packets_into_buffer(recipient))
+    env.process(SenderT1.simulate_adding_packets_into_buffer(clients[1:conf["security"]["nr_target_recipients"]+1]))
     print("> Started sending traffic for measurments")
 
     # reste packet list
@@ -186,7 +176,12 @@ def run_client_server(env, conf, net, loggers):
     pkt_list_gen = env.collected_packets
     pkt_list_info = [{"src": str(pkt.real_sender.id), "dst": str(pkt.dest.id), "time_sent": pkt.time_sent, "time_delivered": pkt.time_delivered} for pkt in pkt_list_gen]
 
-    with open(packet_folder_path + "/packets-" + time.strftime("%Y%m%d-%H%M%S") + ".txt", 'w') as file_handler:
+    file_name = packet_folder_path + "/packets-" + time.strftime("%Y%m%d-%H%M%S") + ".txt"
+    with open(file_name, 'w') as file_handler:
+        # write the id of the sender
+        file_handler.write("{}\n".format(SenderT1.id))
+        # write the id of the recipients
+        file_handler.write("[\"{}\"]\n".format("\",\"".join([r.id for r in clients[1:conf["security"]["nr_target_recipients"]+1]])))
         for item in pkt_list_info:
             file_handler.write("{}\n".format(item))
 
@@ -221,6 +216,7 @@ def run_client_server(env, conf, net, loggers):
     print("Network throughput %f / second: " % throughput)
     print("Average mix throughput %f / second, with std: %f" % (np.mean(mixthroughputs), np.std(mixthroughputs)))
 
+    return file_name
 
 def flush_logs(loggers):
     for l in loggers:
@@ -257,4 +253,4 @@ def run(exp_dir, conf_file=None, conf_dic=None):
     if type == "p2p":
         run_p2p(env, conf, net, loggers)
     else:
-        run_client_server(env, conf, net, loggers)
+        return run_client_server(env, conf, net, loggers)

@@ -300,8 +300,17 @@ class Node(object):
             #msg = Message.random(conf=self.conf, net=self.net, sender=self, dest=dest)  # New Message
             # get message size according to selected sender model
             msg_size = math.ceil(self.get_msg_size())
+
+            # TODO this way, with many recipients and low number of rounds,
+            # it is not sure that every recipients get sent messages to
+
+            # for handling lists of recipients
+            if isinstance(dest, list):
+                dest_single = np.random.choice(dest)
+            else:
+                dest_single = dest
             # create corresponding packet
-            msg = Message(conf=self.conf, net=self.net, payload=random_string(msg_size), real_sender=self, dest=dest)  # New Message
+            msg = Message(conf=self.conf, net=self.net, payload=random_string(msg_size), real_sender=self, dest=dest_single)  # New Message
             current_time = self.env.now
             msg.time_queued = current_time  # The time when the message was created and placed into the queue
             for pkt in msg.pkts:
