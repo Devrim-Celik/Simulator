@@ -156,7 +156,7 @@ def standard_SDA(
         alice_indx (int): client index of alice, i.e., target
     """
     # get all the recipient count of the rounds, where alice is involved
-    relevant_observations = [np.array(t[1]) for t in observation_list if t[0][0] == 1]
+    relevant_observations = [np.array(t[1]) for t in observation_list if t[0][alice_indx] >= 1]
 
     # make u to a numpy array
     u = np.array(u)
@@ -166,6 +166,56 @@ def standard_SDA(
 
     return v
 
+def p_alice_criteria(sender_obsv, cloak_users):
+    """
+    Check if one of the cloak users was an active sender in a particular round.
+    """
+    senders = [i for i, e in enumerate(sender_obsv) if (e != 0)]
+
+    return set(senders) & set(cloak_users)
+
+def improv_extended_SDA(
+    observation_list,
+    b: float,
+    alice_indx: int = 0
+):
+    """
+    Improv-Extended statistical disclosure attack.
+
+    Args:
+        observation_list (list): each element is a tuple
+                        * sender counts
+                        * recipient counts
+                        of one round
+        b (float): number of messages per round
+        alice_indx (int): client index of alice, i.e., target
+    """
+    # TODO non_alice_observations are empty --> chernov bound problem?
+    # divide the observations
+    alice_observations = [t[0] for t in observation_list if t[0][alice_indx] >= 1]
+    non_alice_observations = [t[0] for t in observation_list if t[0][alice_indx] == 0]
+
+    # get the cloak users
+    alice_cloak = []
+    for sender_obsv in alice_observations:
+        # get all the indices of one alice rounds (excluding alices index)
+        alice_cloak.extend([i for i, e in enumerate(sender_obsv) if (e != 0) and (i != alice_indx)])
+    # remove the doubles and sort
+    alice_cloak = sorted(list(set(alice_cloak)))
+
+    # get all the rounds where alice did not participate, but at least one
+    # of the alice's cloak
+    p_alice = [obsv for obsv in non_alice_observations if p_alice_criteria(obsv, alice_cloak)]
+
+    # calculate cloak bar
+    cloak_bar_alice = np.sum(p_alice, axis=0)/len(p_alice)
+
+    # calculate v
+    t_prime = len(alice_observations)
+    a_bar = np.sum([obsv[alice_indx]/np.sum(obsv) for obsv in alice_observations])/t_prime
+    v = (b/(a_bar * t_prime))*np.sum(alice_observations, axis=0) - ((b-a_bar)/a_bar)*cloak_bar_alice
+
+    return v
 
 def SDA_over_time(
     observation_list,
