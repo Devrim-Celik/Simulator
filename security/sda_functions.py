@@ -57,18 +57,16 @@ def extract_observations_continuous(pkt_list, nr_clients, id_nr_to_track, mu, n,
     # extract the packets sent by the id_nr we are interested in
     pkts_of_interest = [pkt for pkt in pkt_list if pkt["src"] == id_nr_to_track]
 
-
     # calculate the upper bound on the delay we allow
     upper_delay_bound = chernov_bound_erlang(mu, n, confidence)
 
     # calculating the percentage of packets below the bound
-    print(f"Upper Bound with {confidence}% Confidence is: {upper_delay_bound}.")
+    print(f"Upper Bound with {confidence*100}% Confidence is: {upper_delay_bound}.")
     under_bound_bool = []
     for indx, pkt in enumerate(pkt_list):
-        k = pkt["time_delivered"]-pkt["time_sent"]
-
-        under_bound_bool.append(k <= upper_delay_bound)
-    print(f"{np.mean(under_bound_bool)}% of message delays are below that bound.")
+        delay = pkt["time_delivered"]-pkt["time_sent"]
+        under_bound_bool.append(delay <= upper_delay_bound)
+    print(f"{np.mean(under_bound_bool)*100}% of message delays are below that bound.")
 
     # for each of these packets
     for pkt_of_interest in pkts_of_interest:

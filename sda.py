@@ -36,7 +36,7 @@ def sda(file_name = "playground_experiment/packets/packets-20210822-222119.txt",
     ## STANDARD
     sda_probabilities = standard_SDA(observations, b, [1/conf["clients"]["number"] for _ in range(conf["clients"]["number"])], ID_TO_TRACK) #TODO the 100 is hardcoded
     ## IMPROVED EXTENDED
-    sda_probabilities = improv_extended_SDA(observations, b, ID_TO_TRACK)
+    #sda_probabilities = improv_extended_SDA(observations, b, ID_TO_TRACK)
 
     # compare the results vs the real recipients
     nr_recipients = len(recipient_ids)
