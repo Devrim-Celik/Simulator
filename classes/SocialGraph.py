@@ -76,10 +76,15 @@ def generate_isolted_cliques(
 def generate_open_connect_attr(
     N: int,
     min_oc: int = 1,
-    max_oc: int = 4,
-    a: int = 5
+    max_oc: int = 10,
+    a: int = 2.5 # TODO what to set this value
 ) -> list:
-    return list((np.random.power(a, N)*max_oc + min_oc).astype("int"))
+    # draw form the power law distribution
+    power_law_list = 1-np.random.power(a, N) # TODO weird that it works like this
+    # scale them accordingly
+    oc_values = list(np.around(power_law_list*(max_oc-min_oc) + min_oc))
+
+    return oc_values
 
 #### STEP 3
 def merge_cliques(G: np.ndarray, open_connections: list) -> np.ndarray:
@@ -134,4 +139,4 @@ def generate_social_graph(
 
 
 if __name__=="__main__":
-    G = generate_social_graph(100, 3, 5, 0, 2, True)
+    G = generate_social_graph(100, 3, 8, 0, 2, True)
