@@ -119,8 +119,8 @@ def oc_merging_update(open_connections, survived, deleted, strategy = "max"):
     return open_connections
 
 def merge_cliques(G: np.ndarray, open_connections: list) -> np.ndarray:
-    #TODO we dont merge, but we connect
-
+    # list for saving which indices need to be deleted, because they got merged
+    # with another node
     to_be_deleted = []
 
     # while we connect all that we could (and the rest is different, i.e.,
@@ -239,4 +239,4 @@ def generate_social_graph(
 
 
 if __name__=="__main__":
-    G = generate_social_graph(500, 3, 8, 0, 2, 2.5, True)
+    G = generate_social_graph(50, 3, 8, 0, 2, 2.5, True)
