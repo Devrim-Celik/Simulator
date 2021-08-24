@@ -156,6 +156,22 @@ def merge_cliques(G: np.ndarray, open_connections: list) -> np.ndarray:
 
     return G
 
+### EXTRA
+def prune_graph(G, N_to_be):
+
+    if G.shape[0] < N_to_be:
+        raise ValueError("PROBLEM")
+    elif G.shape[0] == N_to_be:
+        return G
+    else:
+        to_be_deleted = np.random.choice(list(range(G.shape[0])), G.shape[0] - N_to_be)
+
+        # delete all merged rows/columns
+        for indx in sorted(to_be_deleted, reverse=True):
+            G = np.delete(G, indx, 0)
+            G = np.delete(G, indx, 1)
+
+        return G
 ### MAIN
 
 def plot_graph_network(
@@ -166,7 +182,7 @@ def plot_graph_network(
     plt.figure(figsize=(10,5))
 
     ax = plt.gca()
-    ax.set_title(title)
+    ax.set_title(title + f" | Nr. Nodes = {G.shape[0]}")
 
     _G = nx.from_numpy_matrix(G)
     nx.draw_spring(_G, node_color='red', ax = ax, node_size = node_size)
@@ -180,7 +196,7 @@ def plot_graph_network(
 # TODO
 # TODO
 # TODO
-# TODO ==> Number of Users changes
+# TODO ==> Some cliques are not connected
 # TODO
 # TODO
 # TODO
@@ -196,12 +212,16 @@ def generate_social_graph(
     power_law_a: float = 2.5,
     plot_network: bool = False
 ):
+    # start with more nodes than we actually want, since the merging process
+    # will delete nodes; we will prune the rest at the end
+    overestimated_N = int(N*1.5)
+
     # generate the cliques
-    G =  generate_isolted_cliques(N, min_clique_size, max_clique_size)
+    G =  generate_isolted_cliques(overestimated_N, min_clique_size, max_clique_size)
     if plot_network:
         plot_graph_network(G, "After Clique Generation")
     # genereate open connection attributes
-    open_connections = generate_open_connect_attr(N, min_oc, max_oc, power_law_a)
+    open_connections = generate_open_connect_attr(overestimated_N, min_oc, max_oc, power_law_a)
 
     # use these to merge cliques
     G = merge_cliques(G, open_connections)
@@ -209,8 +229,14 @@ def generate_social_graph(
     if plot_network:
         plot_graph_network(G, "After Merge")
 
+    # pruning to the right number number of nodes
+    G = prune_graph(G, N)
+
+    if plot_network:
+        plot_graph_network(G, "After Pruning")
+
     return G
 
 
 if __name__=="__main__":
-    G = generate_social_graph(100, 3, 8, 0, 2, 2.5, True)
+    G = generate_social_graph(500, 3, 8, 0, 2, 2.5, True)
