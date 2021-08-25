@@ -7,7 +7,7 @@ import json
 import numpy
 from string import ascii_letters
 import random
-
+import numpy as np
 
 def random_string(size):
     return ''.join(random.choice(ascii_letters) for _ in range(size))
@@ -17,6 +17,29 @@ def get_exponential_delay(avg_delay, cache=[]):
         cache.extend(list(numpy.random.exponential(avg_delay, 10000)))
 
     return cache.pop()
+
+def translation_dictionaries(clients):
+    # get unique IDs and sort them alphabetically
+    old_ids = sorted(list(set([client.id for client in clients])))
+    # generate new ids
+    new_ids = list(range(len(old_ids)))
+
+    translation_dict = {old:new for (old, new) in zip(old_ids, new_ids)}
+    inv_translation_dict = {v: k for k, v in translation_dict.items()}
+
+    return translation_dict, inv_translation_dict
+
+def get_recipients(clients, sender_id, topology, id_to_nr):
+    # get the nr of the sender
+    sender_nr = id_to_nr[sender_id]
+
+    # get the nrs of the recipients
+    recipient_nrs = np.nonzero(topology[sender_nr, :])[0]
+
+    # get the recipients
+    recipients = [rec for rec in clients if id_to_nr[rec.id] in recipient_nrs]
+
+    return recipients
 
 class StructuredMessage(object):
     def __init__(self, metadata):

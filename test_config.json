@@ -33,15 +33,22 @@
     "message": {
         "min_msg_size": 2,
         "max_msg_size": 2,
-        "msg_type": "Mail"},
+        "msg_type": "IM"},
     "mixnodes": {
 			"avg_delay": 0.1,
       "batch": false,
       "batch_size" : 1000,
 			"AQM":false},
+    "social_graph": {
+      "min_clique_size": 3,
+      "max_clique_size": 8,
+      "min_open_connections": 0,
+      "max_open_connections": 2,
+      "power_law_a": 2.5
+    },
     "clients": {
-        "number":100,
-        "sim_add_buffer": 1.0,
+        "number":20,
+        "sim_add_buffer": 0.1,
         "rate_sending": 1.0,
         "rate_ack": 0.5,
         "cover_traffic":false,

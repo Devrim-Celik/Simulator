@@ -9,9 +9,12 @@ import time
 
 import experiments.Settings
 
+from social_graph.SocialGraph import generate_social_graph
+
 from classes.Net import *
 from classes.Client import *
 from classes.Net import *
+from classes.Utilities import *
 from classes.Utilities import *
 
 
@@ -30,7 +33,6 @@ def get_loggers(log_dir, conf):
 
     return (packet_logger, message_logger, entropy_logger)
 
-
 def setup_env(conf):
     env = simpy.Environment()
     env.stop_sim_event = env.event()
@@ -42,107 +44,35 @@ def setup_env(conf):
     env.collected_packets = []
     return env
 
-
-
-def run_p2p(env, conf, net, loggers):
-    print("Runninf P2P topology")
-    peers = net.peers
-    print("Number of active peers: ", len(peers))
-
-    SenderT1 = peers.pop()
-    SenderT1.label = 1
-    SenderT1.verbose = True
-
-    SenderT2 = peers.pop()
-    SenderT2.label = 2
-    SenderT2.verbose = True
-
-    recipient = peers.pop()
-
-    for c in peers:
-        env.process(c.start(random.choice(peers)))
-        env.process(c.start_loop_cover_traffc())
-
-    env.process(SenderT1.start(dest=random.choice(peers)))
-    env.process(SenderT1.start_loop_cover_traffc())
-    env.process(SenderT2.start(dest=random.choice(peers)))
-    env.process(SenderT2.start_loop_cover_traffc())
-    env.process(recipient.set_start_logs())
-    env.process(recipient.start(dest=random.choice(peers)))
-    env.process(recipient.start_loop_cover_traffc())
-
-    print("---------" + str(datetime.datetime.now()) + "---------")
-    print("> Running the system for %s ticks to prepare it for measurment." % (conf["phases"]["burnin"]))
-
-    # env.process(progress_update(env, 5))
-    time_started = env.now
-    time_started_unix = datetime.datetime.now()
-    # ------ RUNNING THE STARTUP PHASE ----------
-    if conf["phases"]["burnin"] > 0.0:
-        env.run(until=conf["phases"]["burnin"])
-    print("> Finished the preparation")
-
-    # Start logging since system in steady state
-    for p in net.peers:
-        p.mixlogging = True
-
-    env.process(SenderT1.simulate_adding_packets_into_buffer(recipient))
-    print("> Started sending traffic for measurments")
-
-    env.run(until=env.stop_sim_event)  # Run until the stop_sim_event is triggered.
-    print("> Main part of simulation finished. Starting cooldown phase.")
-
-
-    # ------ RUNNING THE COOLDOWN PHASE ----------
-    env.run(until=env.now + conf["phases"]["cooldown"])
-
-
-    # Log entropy
-    loggers[2].info(StructuredMessage(metadata=tuple(env.entropy)))
-    print("> Cooldown phase finished.")
-
-    time_finished = env.now
-    time_finished_unix = datetime.datetime.now()
-
-    print("> Total Simulation Time [in ticks]: " + str(time_finished-time_started) + "---------")
-    print("> Total Simulation Time [in unix time]: " + str(time_finished_unix-time_started_unix) + "---------")
-
-    flush_logs(loggers)
-
-    global throughput
-    throughput = float(env.total_messages_received) / float(time_finished-time_started)
-
-    mixthroughputs = []
-    for p in net.peers:
-        mixthroughputs.append(float(p.pkts_sent) / float(time_finished-time_started))
-
-    print("Network throughput %f / second: " % throughput)
-    print("Average mix throughput %f / second, with std: %f" % (np.mean(mixthroughputs), np.std(mixthroughputs)))
-
-
-
-def run_client_server(env, conf, net, loggers):
+def run_client_server(env, conf, net, topology, loggers):
     clients = net.clients
     print("Number of active clients: ", len(clients))
 
-    SenderT1 = clients.pop()
-    SenderT1.label = 1
-    SenderT1.verbose = True
-    print("Target Sender1: ", SenderT1.id)
+    # create the translation dictionaries
+    id_to_nr, nr_to_id = translation_dictionaries(clients)
 
     net.mixnodes[0].verbose = True
 
+    # For Alice
+    Alice = clients[0]
+    Alice.label = 1
+    Alice.verbose = True
+    print("Alice: ", Alice.id, id_to_nr[Alice.id])
+    alice_recipients = get_recipients(clients, Alice.id, topology, id_to_nr)
+    env.process(Alice.start())
+    env.process(Alice.start_loop_cover_traffc())
+
+    # go through all clients, but skip Alice
+    ctr = 0
     for c_indx, c in enumerate(clients[1:]):
         c.verbose = True
-        # identify the recipients:
-        if c_indx < conf["security"]["nr_target_recipients"]:
-            print(f"Target Recipient {c_indx + 1}: ", c.id)
+        # identify the recipients of alice:
+        if c in alice_recipients:
+            ctr += 1
+            print(f"Target Recipient {ctr}: ", c.id, id_to_nr[c.id])
             c.set_start_logs()
-        env.process(c.start(random.choice(clients))) # TODO: for now everyone only send to one person...
+        env.process(c.start())
         env.process(c.start_loop_cover_traffc())
-
-    env.process(SenderT1.start(dest=clients[1:conf["security"]["nr_target_recipients"]+1]))
-    env.process(SenderT1.start_loop_cover_traffc())
 
     print("---------" + str(datetime.datetime.now()) + "---------")
     print("> Running the system for %s ticks to prepare it for measurment." % (conf["phases"]["burnin"]))
@@ -159,7 +89,11 @@ def run_client_server(env, conf, net, loggers):
     for p in net.mixnodes:
         p.mixlogging = True
 
-    env.process(SenderT1.simulate_adding_packets_into_buffer(clients[1:conf["security"]["nr_target_recipients"]+1]))
+    # start creating packets
+    env.process(Alice.simulate_adding_packets_into_buffer(alice_recipients))
+    for c in clients[1:]:
+        env.process(c.simulate_adding_packets_into_buffer(get_recipients(clients, c.id, topology, id_to_nr)))
+
     print("> Started sending traffic for measurments")
 
     # reste packet list
@@ -179,9 +113,9 @@ def run_client_server(env, conf, net, loggers):
     file_name = packet_folder_path + "/packets-" + time.strftime("%Y%m%d-%H%M%S") + ".txt"
     with open(file_name, 'w') as file_handler:
         # write the id of the sender
-        file_handler.write("{}\n".format(SenderT1.id))
+        file_handler.write("{}\n".format(Alice.id))
         # write the id of the recipients
-        file_handler.write("[\"{}\"]\n".format("\",\"".join([r.id for r in clients[1:conf["security"]["nr_target_recipients"]+1]])))
+        file_handler.write("[\"{}\"]\n".format("\",\"".join([r.id for r in alice_recipients])))
         for item in pkt_list_info:
             file_handler.write("{}\n".format(item))
 
@@ -245,12 +179,19 @@ def run(exp_dir, conf_file=None, conf_dic=None):
     # Setup environment
     env = setup_env(conf)
 
+    # create the social graph
+    connectivity_matrix = generate_social_graph(
+                            conf["clients"]["number"],
+                            conf["social_graph"]["min_clique_size"],
+                            conf["social_graph"]["max_clique_size"],
+                            conf["social_graph"]["min_open_connections"],
+                            conf["social_graph"]["max_open_connections"],
+                            conf["social_graph"]["power_law_a"]
+                            )
+    print(connectivity_matrix)
     # Create the network
     type = conf["network"]["topology"]
     loggers = get_loggers(log_dir, conf)
     net = Network(env, type, conf, loggers)
 
-    if type == "p2p":
-        run_p2p(env, conf, net, loggers)
-    else:
-        return run_client_server(env, conf, net, loggers)
+    return run_client_server(env, conf, net, connectivity_matrix, loggers)

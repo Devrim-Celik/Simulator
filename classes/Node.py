@@ -51,7 +51,7 @@ class Node(object):
         self.free_to_batch = True
 
 
-    def start(self, dest):
+    def start(self):
         ''' Main client method; It sends packets out.
         It checks if there are any new packets in the outgoing buffer.
         If it finds any, it sends the first of them.
@@ -292,7 +292,6 @@ class Node(object):
             Keyword arguments:
             dest - the destination of the message.
         '''
-        i = 0
 
         while i < self.conf["misc"]["num_target_packets"]:
             yield self.env.timeout(float(self.rate_generating))
@@ -301,24 +300,38 @@ class Node(object):
             # get message size according to selected sender model
             msg_size = math.ceil(self.get_msg_size())
 
-            # TODO this way, with many recipients and low number of rounds,
-            # it is not sure that every recipients get sent messages to
+            # check if the newly generated packet will not explode the
+            # "num_target_packets" limit we set
+            # this is the nr of packets/fragments for this size
+            projection_nr_pkts = int(math.ceil(float(msg_size/float(self.conf["packet"]["packet_size"]))))
+            if (i + projection_nr_pkts) >= self.conf["misc"]["num_target_packets"]:
+                # if it explodes limit, set it to the difference in pkts we
+                # still need and multiply by pkt size
+                msg_size = int((self.conf["misc"]["num_target_packets"] - i) * float(self.conf["packet"]["packet_size"]))
 
             # for handling lists of recipients
             if isinstance(dest, list):
                 dest_single = np.random.choice(dest)
             else:
                 dest_single = dest
+
             # create corresponding packet
             msg = Message(conf=self.conf, net=self.net, payload=random_string(msg_size), real_sender=self, dest=dest_single)  # New Message
             current_time = self.env.now
             msg.time_queued = current_time  # The time when the message was created and placed into the queue
+            # go through the pkts of the msgs
             for pkt in msg.pkts:
                 pkt.time_queued = current_time
                 pkt.probability_mass[i] = 1.0
+            # add them to the output buffer
             self.add_to_buffer(msg.pkts)
             self.env.message_ctr += 1
+            # increase the pkt counter
             i += len(msg.pkts)
+
+        # TODO this number is 1 or 2 smaller then the defined limit
+        #print(self.id, len(self.pkt_buffer_out))
+
         self.env.finished = True
 
 
