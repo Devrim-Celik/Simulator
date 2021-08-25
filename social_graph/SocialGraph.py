@@ -156,11 +156,11 @@ def merge_cliques(G: np.ndarray, open_connections: list) -> np.ndarray:
 
     return G
 
-### EXTRA
+### STEP 4
 def prune_graph(G, N_to_be):
 
     if G.shape[0] < N_to_be:
-        raise ValueError("PROBLEM")
+        return False
     elif G.shape[0] == N_to_be:
         return G
     else:
@@ -172,6 +172,15 @@ def prune_graph(G, N_to_be):
             G = np.delete(G, indx, 1)
 
         return G
+
+### MISC
+
+def count_isolated(G):
+    # identify the largest component and the "isolated" nodes
+    components = list(nx.connected_components(nx.from_numpy_matrix(G)))
+    print(len(components))
+    return len(components)
+
 ### MAIN
 
 def plot_graph_network(
@@ -212,30 +221,42 @@ def generate_social_graph(
     power_law_a: float = 2.5,
     plot_network: bool = False
 ):
-    # start with more nodes than we actually want, since the merging process
-    # will delete nodes; we will prune the rest at the end
-    overestimated_N = int(N*1.5)
+    # we only want to consider networks, where there aren't any outside
+    # stragglers, i.e., everybody can indirectly talk to everybody
+    isolated_exists = True
 
-    # generate the cliques
-    G =  generate_isolted_cliques(overestimated_N, min_clique_size, max_clique_size)
+    while isolated_exists:
+        # start with more nodes than we actually want, since the merging process
+        # will delete nodes; we will prune the rest at the end
+        overestimated_N = int(N*1.5)
+
+        # generate the cliques
+        G_iso_clique =  generate_isolted_cliques(overestimated_N, min_clique_size, max_clique_size)
+
+        # genereate open connection attributes
+        open_connections = generate_open_connect_attr(overestimated_N, min_oc, max_oc, power_law_a)
+
+        # use these to merge cliques
+        G_merged = merge_cliques(G_iso_clique, open_connections)
+
+
+        # pruning to the right number number of nodes
+        G_pruned = prune_graph(G_merged, N)
+
+        # check if the prune graph function threw a problem
+        if (isinstance(G_pruned, bool)) and (G_pruned == False):
+            continue
+
+        # if there are no more than one isolated graph, we are fininshed
+        if count_isolated(G_pruned) == 1:
+            isolated_exists = False
+
     if plot_network:
-        plot_graph_network(G, "After Clique Generation")
-    # genereate open connection attributes
-    open_connections = generate_open_connect_attr(overestimated_N, min_oc, max_oc, power_law_a)
+        plot_graph_network(G_iso_clique, "After Clique Generation")
+        plot_graph_network(G_merged, "After Merge")
+        plot_graph_network(G_pruned, "After Pruning")
 
-    # use these to merge cliques
-    G = merge_cliques(G, open_connections)
-
-    if plot_network:
-        plot_graph_network(G, "After Merge")
-
-    # pruning to the right number number of nodes
-    G = prune_graph(G, N)
-
-    if plot_network:
-        plot_graph_network(G, "After Pruning")
-
-    return G
+    return G_pruned
 
 
 if __name__=="__main__":
