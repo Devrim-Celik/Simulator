@@ -1,5 +1,2 @@
-1. Add improved SDAs
-2. Also save target of alice
-3. also get id of alice
-4. MAIL PROB AND SIZES in MARKOV CHAIN
-5. Right now, only senderT1 sends proper packets; what about the others?
+1. Right now, the number of Alice's recipients is determined (randomly) by the social graph script. How can we fix this number?
+2. Ensure that there are no users, that are not connected to any other user, since the corresponding user has noone to sent messages to
