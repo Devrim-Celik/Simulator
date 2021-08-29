@@ -40,6 +40,7 @@
       "batch_size" : 1000,
 			"AQM":false},
     "social_graph": {
+      "uniform_setup": false,
       "min_clique_size": 3,
       "max_clique_size": 8,
       "min_open_connections": 0,

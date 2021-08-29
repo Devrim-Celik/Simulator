@@ -9,7 +9,7 @@ import time
 
 import experiments.Settings
 
-from social_graph.SocialGraph import generate_social_graph
+from social_graph.SocialGraph import generate_random_social_graph, generate_uniform_social_graph
 
 from classes.Net import *
 from classes.Client import *
@@ -180,18 +180,24 @@ def run(exp_dir, conf_file=None, conf_dic=None):
 
     print("> Create Social Graph")
     # create the social graph
-    connectivity_matrix = generate_social_graph(
-                            conf["clients"]["number"],
-                            conf["social_graph"]["min_clique_size"],
-                            conf["social_graph"]["max_clique_size"],
-                            conf["social_graph"]["min_open_connections"],
-                            conf["social_graph"]["max_open_connections"],
-                            conf["social_graph"]["power_law_a"],
-                            conf["social_graph"]["nr_alice_recipients"]
-                            )
+    if conf["social_graph"]["uniform_setup"]: # uniform setup
+        connectivity_matrix = generate_uniform_social_graph(
+                                conf["clients"]["number"],
+                                conf["social_graph"]["nr_alice_recipients"]
+                                )
+    else: # random setup
+        connectivity_matrix = generate_random_social_graph(
+                                conf["clients"]["number"],
+                                conf["social_graph"]["min_clique_size"],
+                                conf["social_graph"]["max_clique_size"],
+                                conf["social_graph"]["min_open_connections"],
+                                conf["social_graph"]["max_open_connections"],
+                                conf["social_graph"]["power_law_a"],
+                                conf["social_graph"]["nr_alice_recipients"]
+                                )
     # translate them to probabilities
     sending_probabilities = connectivity_to_probabilities(connectivity_matrix)
-
+    
     # Create the network
     type = conf["network"]["topology"]
     loggers = get_loggers(log_dir, conf)

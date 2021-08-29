@@ -242,7 +242,7 @@ def plot_graph_network(
 
 
 # TODO ==> RIGHT PARAMS?
-def generate_social_graph(
+def generate_random_social_graph(
     N: int,
     min_clique_size: int = 2,
     max_clique_size: int = 5,
@@ -315,6 +315,27 @@ def generate_social_graph(
 
     return G_pruned
 
+##### Uniform Social Graph
+def generate_uniform_social_graph(N: int, alice_recipient_nr: int):
+    """
+    For generating a social graph, where everybody considers everybody a
+    recipient. Alice is the exception, with a specified amount of recipients.
+    Note, alice has index 0.
+    """
+    # create a fully connected one
+    G = np.ones((N, N))
+
+    # then set the diagonal to 0
+    np.fill_diagonal(G, 0)
+
+    # select the appropriate number of indices to set to 0
+    sever_connections_indc = np.random.choice(range(1, N), size= (N-1) - alice_recipient_nr, replace = False)
+
+    # delete these connections
+    G[0, sever_connections_indc] = 0
+    G[sever_connections_indc, 0] = 0
+
+    return G
 
 if __name__=="__main__":
-    G = generate_social_graph(10, 3, 8, 0, 2, 2.5, 3, False)
+    G = generate_random_social_graph(10, 3, 8, 0, 2, 2.5, 3, False)

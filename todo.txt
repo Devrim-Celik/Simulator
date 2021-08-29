@@ -1,3 +1,4 @@
 1. Right params for Social Graph Generation
 2. Correct probs in standard SDA
 3. Work on improved SDA
+4. We only have symmetric social connections. Is that wanted?
