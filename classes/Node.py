@@ -293,6 +293,8 @@ class Node(object):
             dest - the destination of the message.
         '''
 
+        i = 0
+
         while i < self.conf["misc"]["num_target_packets"]:
             yield self.env.timeout(float(self.rate_generating))
 
