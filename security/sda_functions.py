@@ -154,13 +154,14 @@ def standard_SDA(
         alice_indx (int): client index of alice, i.e., target
     """
     # get all the recipient count of the rounds, where alice is involved
-    relevant_observations = [np.array(t[1]) for t in observation_list if t[0][alice_indx] >= 1]
+    # and normalize then for each round
+    o = [np.array(t[1])/np.sum(np.array(t[1])) for t in observation_list if t[0][alice_indx] >= 1]
 
     # make u to a numpy array
     u = np.array(u)
 
     # calculate the sender profile of alice
-    v = b*np.sum(relevant_observations, axis=0)/len(observation_list) - (b-1)*u
+    v = b*np.sum(o, axis=0)/len(o) - (b-1)*u
 
     return v
 
