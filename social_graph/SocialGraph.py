@@ -164,8 +164,7 @@ def prune_graph(G, N_to_be):
     elif G.shape[0] == N_to_be:
         return G
     else:
-        to_be_deleted = np.random.choice(list(range(G.shape[0])), G.shape[0] - N_to_be)
-
+        to_be_deleted = np.random.choice(list(range(G.shape[0])), size = G.shape[0] - N_to_be, replace=False)
         # delete all merged rows/columns
         for indx in sorted(to_be_deleted, reverse=True):
             G = np.delete(G, indx, 0)
@@ -175,11 +174,52 @@ def prune_graph(G, N_to_be):
 
 ### MISC
 
-def count_isolated(G):
+def count_isolated(G: np.ndarray) -> int:
+    """
+    Counts the number of isolated groups in the topology.
+    """
     # identify the largest component and the "isolated" nodes
     components = list(nx.connected_components(nx.from_numpy_matrix(G)))
-    print(len(components))
     return len(components)
+
+def switch_alice_with_user(G:np.ndarray, alice_recipient_nr:int) -> (np.ndarray, bool):
+    """
+    Returns:
+        (np.ndarry, bool): boolean indicates if it was successful. np.ndarray
+                            is None if it didnt.
+    """
+
+    # get all the indices of possible switch partners
+    possible_switch_partner_indc = np.argwhere(np.sum(G, axis=1) == alice_recipient_nr)
+
+    # check if any of those is not connected to alice; this is important since,
+    # if they are connected this makes things harder (in which case we just
+    # return false and try with another setup)
+    switch_partner_indx = -1
+    for candidate_indx in possible_switch_partner_indc:
+        # if this condition triggers, than we found such a user
+        if G[0, candidate_indx] == 0:
+            switch_partner_indx = candidate_indx
+            break
+    # if we didnt find one yet, return false
+    if switch_partner_indx == -1:
+        return (None, False)
+
+    ## else, switch their connections
+    switch_indices = [0, switch_partner_indx]
+    ## TODO this throws the deprecated numpy warning
+    to_be_switched_indc = ~np.isin(list(np.arange(G.shape[0])), switch_indices)
+    # get all connection but the one of alice and the partner (they stay)
+    alice_connections = G[0, to_be_switched_indc].copy()
+    partner_connections = G[switch_partner_indx, to_be_switched_indc].copy()
+    # switch them (col and row) for alice
+    G[0, to_be_switched_indc] = partner_connections
+    G[to_be_switched_indc, 0] = partner_connections
+    # same for the partner
+    G[switch_partner_indx, to_be_switched_indc] = alice_connections
+    G[to_be_switched_indc, switch_partner_indx] = alice_connections
+
+    return G, True
 
 ### MAIN
 
@@ -200,18 +240,8 @@ def plot_graph_network(
 
     plt.show()
 
-# TODO
-# TODO
-# TODO
-# TODO
-# TODO
-# TODO ==> Some cliques are not connected
-# TODO
-# TODO
-# TODO
+
 # TODO ==> RIGHT PARAMS?
-# TODO
-# TODO
 def generate_social_graph(
     N: int,
     min_clique_size: int = 2,
@@ -219,13 +249,22 @@ def generate_social_graph(
     min_oc: int = 1,
     max_oc: int = 4,
     power_law_a: float = 2.5,
+    alice_recipient_nr: int = None,
     plot_network: bool = False
 ):
     # we only want to consider networks, where there aren't any outside
     # stragglers, i.e., everybody can indirectly talk to everybody
     isolated_exists = True
 
-    while isolated_exists:
+    # for determining if alice has the right amount of recipients, as defined
+    alice_right_nr_recipients = False
+
+    while isolated_exists or not alice_right_nr_recipients:
+        # so that they dont stack up over multiple iterations, we re-initiate
+        # them every iteration
+        isolated_exists = True
+        alice_right_nr_recipients = False
+
         # start with more nodes than we actually want, since the merging process
         # will delete nodes; we will prune the rest at the end
         overestimated_N = int(N*1.5)
@@ -247,9 +286,27 @@ def generate_social_graph(
         if (isinstance(G_pruned, bool)) and (G_pruned == False):
             continue
 
+
+        ## CONDITION 1 - NO ISOLATED GROUPS: we dont isolated subgroups
+
         # if there are no more than one isolated graph, we are fininshed
         if count_isolated(G_pruned) == 1:
             isolated_exists = False
+
+        ## CONDITION 2 - ALICE RECIPIENT NR: try to change the topology, such
+        ## that alice has the right amount of recipients
+        if alice_recipient_nr:
+            # check if it already works
+            if np.sum(G_pruned[0, :]) == alice_recipient_nr:
+                alice_right_nr_recipients = True
+            # else, check if there is some other user that has the right amount
+            elif alice_recipient_nr in np.sum(G_pruned, axis=1):
+                # then we change the topology (switch the users connectivity with
+                # the one of alice) to make it fit
+                G_pruned, alice_right_nr_recipients = switch_alice_with_user(G_pruned, alice_recipient_nr)
+        else:
+            alice_right_nr_recipients = True
+
 
     if plot_network:
         plot_graph_network(G_iso_clique, "After Clique Generation")
@@ -260,4 +317,4 @@ def generate_social_graph(
 
 
 if __name__=="__main__":
-    G = generate_social_graph(50, 3, 8, 0, 2, 2.5, True)
+    G = generate_social_graph(10, 3, 8, 0, 2, 2.5, 3, False)

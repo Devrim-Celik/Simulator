@@ -1,1 +1,3 @@
-1. Right now, the number of Alice's recipients is determined (randomly) by the social graph script. How can we fix this number?
+1. Right params for Social Graph Generation
+2. Correct probs in standard SDA
+3. Work on improved SDA

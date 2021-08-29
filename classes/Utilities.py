@@ -18,13 +18,30 @@ def get_exponential_delay(avg_delay, cache=[]):
 
     return cache.pop()
 
-def translation_dictionaries(clients):
+def translation_dictionaries(clients, alice_id):
+    """
+    Create dictionaries for translating ids to nrs and back.
+    Also, make it so that alice id has nr 0
+    """
     # get unique IDs and sort them alphabetically
     old_ids = sorted(list(set([client.id for client in clients])))
-    # generate new ids
+
+    # generate new ids (nrs)
     new_ids = list(range(len(old_ids)))
 
+    # from id to nr
     translation_dict = {old:new for (old, new) in zip(old_ids, new_ids)}
+    ## switch it so that alice has id 0
+    for key, value in translation_dict.items():
+        # find user with id 0
+        if value == 0:
+            zero_user = key
+            break
+            # switcheroo
+    translation_dict[zero_user] = translation_dict[alice_id]
+    translation_dict[alice_id] = 0
+            
+    # create the inverse
     inv_translation_dict = {v: k for k, v in translation_dict.items()}
 
     return translation_dict, inv_translation_dict

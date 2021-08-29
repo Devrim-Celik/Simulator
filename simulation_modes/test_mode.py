@@ -49,8 +49,7 @@ def run_client_server(env, conf, net, sending_probabilities, loggers):
     print("Number of active clients: ", len(clients))
 
     # create the translation dictionaries
-    id_to_nr, nr_to_id = translation_dictionaries(clients)
-
+    id_to_nr, nr_to_id = translation_dictionaries(clients, clients[0].id)
     net.mixnodes[0].verbose = True
 
     # For Alice
@@ -179,6 +178,7 @@ def run(exp_dir, conf_file=None, conf_dic=None):
     # Setup environment
     env = setup_env(conf)
 
+    print("> Create Social Graph")
     # create the social graph
     connectivity_matrix = generate_social_graph(
                             conf["clients"]["number"],
@@ -186,7 +186,8 @@ def run(exp_dir, conf_file=None, conf_dic=None):
                             conf["social_graph"]["max_clique_size"],
                             conf["social_graph"]["min_open_connections"],
                             conf["social_graph"]["max_open_connections"],
-                            conf["social_graph"]["power_law_a"]
+                            conf["social_graph"]["power_law_a"],
+                            conf["social_graph"]["nr_alice_recipients"]
                             )
     # translate them to probabilities
     sending_probabilities = connectivity_to_probabilities(connectivity_matrix)
