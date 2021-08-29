@@ -29,17 +29,19 @@ def translation_dictionaries(clients):
 
     return translation_dict, inv_translation_dict
 
-def get_recipients(clients, sender_id, topology, id_to_nr):
+def get_recipients(clients, sender_id, sending_probabilities, id_to_nr):
     # get the nr of the sender
     sender_nr = id_to_nr[sender_id]
 
     # get the nrs of the recipients
-    recipient_nrs = np.nonzero(topology[sender_nr, :])[0]
+    recipient_nrs = np.nonzero(sending_probabilities[sender_nr, :])[0]
+    # and their corresponding probabilities
+    probabilities = sending_probabilities[sender_nr, recipient_nrs]
 
     # get the recipients
     recipients = [rec for rec in clients if id_to_nr[rec.id] in recipient_nrs]
 
-    return recipients
+    return recipients, probabilities
 
 class StructuredMessage(object):
     def __init__(self, metadata):
@@ -72,3 +74,11 @@ def setup_logger(logger_name, filehandler_name, capacity=50000000):
 
     logger.addHandler(memoryhandler)
     return logger
+
+def connectivity_to_probabilities(connectivity_matrix):
+    # collect the row wise sums (i.e. # of recipients per user)
+    sums = np.sum(connectivity_matrix, axis=1)
+    # normalize the entries
+    sending_probabilities = connectivity_matrix / sums[:, None]
+
+    return sending_probabilities

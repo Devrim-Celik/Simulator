@@ -44,7 +44,7 @@ def setup_env(conf):
     env.collected_packets = []
     return env
 
-def run_client_server(env, conf, net, topology, loggers):
+def run_client_server(env, conf, net, sending_probabilities, loggers):
     clients = net.clients
     print("Number of active clients: ", len(clients))
 
@@ -58,7 +58,7 @@ def run_client_server(env, conf, net, topology, loggers):
     Alice.label = 1
     Alice.verbose = True
     print("Alice: ", Alice.id, id_to_nr[Alice.id])
-    alice_recipients = get_recipients(clients, Alice.id, topology, id_to_nr)
+    alice_recipients, alice_recipients_probalities = get_recipients(clients, Alice.id, sending_probabilities, id_to_nr)
     env.process(Alice.start())
     env.process(Alice.start_loop_cover_traffc())
 
@@ -90,9 +90,9 @@ def run_client_server(env, conf, net, topology, loggers):
         p.mixlogging = True
 
     # start creating packets
-    env.process(Alice.simulate_adding_packets_into_buffer(alice_recipients))
+    env.process(Alice.simulate_adding_packets_into_buffer(alice_recipients, alice_recipients_probalities))
     for c in clients[1:]:
-        env.process(c.simulate_adding_packets_into_buffer(get_recipients(clients, c.id, topology, id_to_nr)))
+        env.process(c.simulate_adding_packets_into_buffer(*get_recipients(clients, c.id, sending_probabilities, id_to_nr)))
 
     print("> Started sending traffic for measurments")
 
@@ -188,10 +188,12 @@ def run(exp_dir, conf_file=None, conf_dic=None):
                             conf["social_graph"]["max_open_connections"],
                             conf["social_graph"]["power_law_a"]
                             )
-    print(connectivity_matrix)
+    # translate them to probabilities
+    sending_probabilities = connectivity_to_probabilities(connectivity_matrix)
+
     # Create the network
     type = conf["network"]["topology"]
     loggers = get_loggers(log_dir, conf)
     net = Network(env, type, conf, loggers)
 
-    return run_client_server(env, conf, net, connectivity_matrix, loggers)
+    return run_client_server(env, conf, net, sending_probabilities, loggers)

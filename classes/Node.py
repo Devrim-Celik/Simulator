@@ -283,7 +283,7 @@ class Node(object):
             print("> Logs set on for Client %s." % self.id)
 
 
-    def simulate_adding_packets_into_buffer(self, dest):
+    def simulate_adding_packets_into_buffer(self, dest, dest_probabilities):
         #  This function is used in the test mode
         ''' This method generates the actual 'real' messages for which we compute the entropy.
             The rate at which we generate this traffic is defined by rate_generating variable in
@@ -291,6 +291,7 @@ class Node(object):
 ​
             Keyword arguments:
             dest - the destination of the message.
+            dest_probabilities - probabilities of sending to them
         '''
 
         i = 0
@@ -313,7 +314,7 @@ class Node(object):
 
             # for handling lists of recipients
             if isinstance(dest, list):
-                dest_single = np.random.choice(dest)
+                dest_single = np.random.choice(dest, p = dest_probabilities)
             else:
                 dest_single = dest
 
