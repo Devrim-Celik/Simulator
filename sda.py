@@ -4,7 +4,7 @@ import json
 def get_n_highest_indices(iterable, n):
     return sorted(np.array(iterable).argsort()[-n:][::-1])
 
-def sda(file_name = "playground_experiment/packets/packets-20210822-222119.txt", config_file = "test_config.json"):
+def sda(file_name = "playground_experiment/packets/packets-20210830-005742.txt", config_file = "test_config.json"):
     # TODO work CONFIG params in
     print("\n\n\n[!] STARTING SDA...")
 
@@ -13,7 +13,7 @@ def sda(file_name = "playground_experiment/packets/packets-20210822-222119.txt",
         conf = json.load(f)
 
     # load the observations and relevant ids from the simulations
-    sender_id, recipient_ids, raw_observations = load_packets(file_name = file_name)
+    sender_id, recipient_ids, sending_probabilities, raw_observations = load_packets(file_name = file_name)
 
     # simplify ids and get the translation dictionary
     raw_observations, translation_dict = simplify_ids(raw_observations)
@@ -34,7 +34,19 @@ def sda(file_name = "playground_experiment/packets/packets-20210822-222119.txt",
     #### apply the attack
     b = np.mean([np.sum(t[0]) for t in observations])
     ## STANDARD
-    sda_probabilities = standard_SDA(observations, b, [1/conf["clients"]["number"] for _ in range(conf["clients"]["number"])], ID_TO_TRACK) #TODO the 100 is hardcoded
+    if conf["security"]["use_social_graph"]:
+        # here we use information about the social graph, i.e., the probabilites
+        # create the sending profile of the other users by excluding alice
+        # and summing over the rows
+        background_profile_temp = list(np.sum(sending_probabilities[1:], axis=0))
+        # normalize
+        background_profile = background_profile_temp/np.sum(background_profile_temp)
+    else:
+        background_profile = [1/conf["clients"]["number"] for _ in range(conf["clients"]["number"])]
+    print(background_profile)
+    sda_probabilities = standard_SDA(observations, b, background_profile, ID_TO_TRACK)
+
+
     ## IMPROVED EXTENDED
     #sda_probabilities = improv_extended_SDA(observations, b, ID_TO_TRACK)
 

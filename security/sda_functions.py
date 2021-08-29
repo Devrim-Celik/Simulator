@@ -11,9 +11,11 @@ def load_packets(file_name = "playground_experiment/packets/packets-20210818-013
     sender_id = pkt_list_str[0][:-1] # -1 for dropping \n
     # get recipient ids
     recipient_ids = eval(pkt_list_str[1])
+    # get sending probabilities
+    sending_probabilities = np.array(eval(pkt_list_str[2]))
     # get packets
-    pkt_list = [eval(dic_str) for dic_str in pkt_list_str[2:]]
-    return sender_id, recipient_ids, pkt_list
+    pkt_list = [eval(dic_str) for dic_str in pkt_list_str[3:]]
+    return sender_id, recipient_ids, sending_probabilities, pkt_list
 
 def simplify_ids(pkt_list):
     # get unique IDs and sort them alphabetically
@@ -156,6 +158,7 @@ def standard_SDA(
     # get all the recipient count of the rounds, where alice is involved
     # and normalize then for each round
     o = [np.array(t[1])/np.sum(np.array(t[1])) for t in observation_list if t[0][alice_indx] >= 1]
+    print(np.sum(o, axis=0)/len(o))
 
     # make u to a numpy array
     u = np.array(u)

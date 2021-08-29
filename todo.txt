@@ -5,4 +5,4 @@
   -> how to differentiate rounds though? time!
 4. We only have symmetric social connections. Is that wanted?
 -> Problem with that is that in standard SDA, ALice is also in the background recipient set
-5.
+5. Does knowledge about social graph mean knowledge about the probabilities? thats how it is right now. alternative: knows recipients, but assumes uniform profile (cant do anything else right now anyways)

@@ -115,6 +115,8 @@ def run_client_server(env, conf, net, sending_probabilities, loggers):
         file_handler.write("{}\n".format(Alice.id))
         # write the id of the recipients
         file_handler.write("[\"{}\"]\n".format("\",\"".join([r.id for r in alice_recipients])))
+        # save the sending probabilities
+        file_handler.write("[{}]\n".format(",".join(["[{}]".format(",".join([str(nr) for nr in sending_probabilities[sender_nr]])) for sender_nr in range(sending_probabilities.shape[0])])))
         for item in pkt_list_info:
             file_handler.write("{}\n".format(item))
 

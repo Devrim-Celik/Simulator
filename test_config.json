@@ -64,6 +64,7 @@
         "num_target_packets": 1000},
     "security": {
       "do_sda": false,
+      "use_social_graph": false,
       "nr_target_recipients": 5,
       "chernov_confidence": 0.9
     }
