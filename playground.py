@@ -27,7 +27,8 @@ if __name__ == "__main__":
 	# run
 	file_name = test_mode.run(exp_dir='playground_experiment', conf_file=None, conf_dic=config)
 	# sda
-	sda(file_name)
+	if config["security"]["do_sda"]:
+		sda(file_name)
 	"""
 	throughput = test_mode.throughput
 
