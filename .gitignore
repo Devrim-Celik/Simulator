@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 playground_experiment/
+testclass_experiments/
