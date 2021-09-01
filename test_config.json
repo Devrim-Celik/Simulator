@@ -40,7 +40,7 @@
       "batch_size" : 1000,
 			"AQM":false},
     "social_graph": {
-      "uniform_setup": true,
+      "uniform_setup": false,
       "min_clique_size": 3,
       "max_clique_size": 8,
       "min_open_connections": 0,
@@ -49,11 +49,11 @@
       "nr_alice_recipients": 5
     },
     "clients": {
-        "number":20,
+        "number": 20,
         "sim_add_buffer": 0.1,
         "rate_sending": 1.0,
         "rate_ack": 0.5,
-        "cover_traffic":false,
+        "cover_traffic":true,
         "cover_traffic_rate":1.0,
         "ACK":false,
         "retransmit":false,

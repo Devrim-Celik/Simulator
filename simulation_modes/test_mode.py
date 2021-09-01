@@ -44,7 +44,7 @@ def setup_env(conf):
     env.collected_packets = []
     return env
 
-def run_client_server(env, conf, net, sending_probabilities, loggers):
+def run_client_server(env, conf, net, sending_probabilities, loggers, data_path):
     clients = net.clients
     print("Number of active clients: ", len(clients))
 
@@ -103,7 +103,7 @@ def run_client_server(env, conf, net, sending_probabilities, loggers):
 
     print("> Saving collected packets...")
 
-    packet_folder_path = "playground_experiment/packets"
+    packet_folder_path = data_path
     Path(packet_folder_path).mkdir(exist_ok=True)
 
     pkt_list_gen = env.collected_packets
@@ -199,10 +199,10 @@ def run(exp_dir, conf_file=None, conf_dic=None):
                                 )
     # translate them to probabilities
     sending_probabilities = connectivity_to_probabilities(connectivity_matrix)
-    
+
     # Create the network
     type = conf["network"]["topology"]
     loggers = get_loggers(log_dir, conf)
     net = Network(env, type, conf, loggers)
 
-    return run_client_server(env, conf, net, sending_probabilities, loggers)
+    return run_client_server(env, conf, net, sending_probabilities, loggers, exp_dir)
