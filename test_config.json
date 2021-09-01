@@ -40,7 +40,7 @@
       "batch_size" : 1000,
 			"AQM":false},
     "social_graph": {
-      "uniform_setup": false,
+      "uniform_setup": true,
       "min_clique_size": 3,
       "max_clique_size": 8,
       "min_open_connections": 0,
@@ -63,8 +63,8 @@
         "id_len": 32,
         "num_target_packets": 1000},
     "security": {
-      "do_sda": false,
-      "use_social_graph": false,
+      "do_sda": true,
+      "use_social_graph": true,
       "nr_target_recipients": 5,
       "chernov_confidence": 0.9
     }

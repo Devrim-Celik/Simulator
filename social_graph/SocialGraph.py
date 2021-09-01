@@ -333,7 +333,7 @@ def generate_uniform_social_graph(N: int, alice_recipient_nr: int):
 
     # delete these connections
     G[0, sever_connections_indc] = 0
-    G[sever_connections_indc, 0] = 0 # TODO possibly leave this out, so everybody can send messages to ALICE
+    #G[sever_connections_indc, 0] = 0 # TODO possibly leave this out, so everybody can send messages to ALICE
 
     return G
 
