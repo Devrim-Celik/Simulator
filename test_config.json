@@ -7,9 +7,9 @@
         "client_log": "client_log.json",
         "mix_log": "mix_log.json"},
     "phases":   {
-        "burnin": 100,
-        "execution": 500,
-        "cooldown": 100},
+        "burnin": 15,
+        "execution": 100,
+        "cooldown": 1},
     "network": {
         "topology" : "stratified",
         "cascade" : {
@@ -51,10 +51,10 @@
     "clients": {
         "number": 20,
         "sim_add_buffer": 0.1,
-        "rate_sending": 1.0,
+        "rate_sending": 50,
         "rate_ack": 0.5,
         "cover_traffic":true,
-        "cover_traffic_rate":1.0,
+        "cover_traffic_rate":5,
         "ACK":false,
         "retransmit":false,
         "dummies_acks":false,

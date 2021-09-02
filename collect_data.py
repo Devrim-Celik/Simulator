@@ -5,7 +5,7 @@ import time
 import pickle
 import json
 import pprint
-
+from datetime import datetime
 pp = pprint.PrettyPrinter(indent=4)
 
 
@@ -18,14 +18,16 @@ class CollectData(object):
         test_path = "./testclass_experiments",
         nr_users_range = [50, 100, 200, 500],
         random_graph_range = [True, False],
-        cover_traffic_range = [(True, 0.5), (True, 1.0), (False, 1.0)],
+        cover_traffic_range = [(True, 2.5), (True, 5), (True, 10), (True, 25), (False, 1.0)], # messages per second, default is 5
+        mix_avg_delay_range = [0.025, 0.05, 0.1], # avg delay in seconds, default is 50ms
         nr_messages = 1000,
-        nr_simulations_per_setup = 5
+        nr_simulations_per_setup = 2
     ):
 
         self.nr_users_range = nr_users_range
         self.random_graph_range = random_graph_range
         self.cover_traffic_range = cover_traffic_range
+        self.mix_avg_delay_range = mix_avg_delay_range
         self.nr_messages = nr_messages
         self.nr_simulations_per_setup = nr_simulations_per_setup
 
@@ -48,15 +50,18 @@ class CollectData(object):
             for nr_users in self.nr_users_range:
                 for rg in self.random_graph_range:
                     for ct, ct_rate in self.cover_traffic_range:
+                        for avg_delay in self.mix_avg_delay_range:
                             # change the config
+                            self.config["mixnodes"]["avg_delay"] = avg_delay
                             self.config["clients"]["number"] = nr_users
-                            self.config["social_graph"]["uniform_setup"] = not rg
                             self.config["clients"]["cover_traffic"] = ct
                             self.config["clients"]["cover_traffic_rate"] = ct_rate
+                            self.config["social_graph"]["uniform_setup"] = not rg
                             self.config["misc"]["num_target_packets"] = self.nr_messages
 
-                            ct_rate_str = str(ct_rate).replace(".", "_")
-                            folder_name = f"{nr_users}_{not rg}_{ct}_{ct_rate_str}_{self.nr_messages}"
+                            ct_rate_str = str(ct_rate).replace(".", "dot")
+                            avg_delay_str = str(avg_delay).replace(".", "dot")
+                            folder_name = f"{nr_users}_{not rg}_{ct}_{ct_rate_str}_{avg_delay_str}_{self.nr_messages}"
                             folder_path = (self.path + "/" + folder_name)
 
                             if not os.path.exists(folder_path):
@@ -65,9 +70,12 @@ class CollectData(object):
                             if not os.path.exists(f"{folder_path}/logs"):
                                 os.makedirs(f"{folder_path}/logs")
 
-
+                            start_time = datetime.now()
                             # execute the run
                             file_name = test_mode.run(exp_dir=folder_path, conf_file=None, conf_dic=self.config)
+                            end_time = datetime.now()
+
+                            total_runtime = (end_time-start_time).seconds
 
                             dic = {
                                 "file_name": file_name,
@@ -75,7 +83,9 @@ class CollectData(object):
                                 "nr_users": nr_users,
                                 "random_graph": rg,
                                 "cover_traffic": (ct, ct_rate),
-                                "nr_messages": self.nr_messages
+                                "mix_avg_delay": avg_delay,
+                                "nr_messages": self.nr_messages,
+                                "runtime": total_runtime
                             }
 
                             self.test_files.append(dic)
@@ -115,6 +125,7 @@ class SDACollector(object):
                     self.config["social_graph"]["uniform_setup"] = not dic["random_graph"]
                     self.config["misc"]["num_target_packets"] = dic["nr_messages"]
                     self.config["clients"]["cover_traffic"] = dic["cover_traffic"]
+                    self.config["mixnodes"]["avg_delay"] = dic["mix_avg_delay"]
                     self.config["security"]["use_social_graph"] = usg
                     self.config["security"]["chernov_confidence"] = confidence
 
@@ -134,8 +145,8 @@ class SDACollector(object):
         pp.pprint(self.result_summary)
 
 if __name__ == "__main__":
-    #cd = CollectData()
-    #cd.run_tests()
+    cd = CollectData()
+    cd.run_tests()
 
-    sdac = SDACollector("./testclass_experiments/test_20210902-121257")
+    sdac = SDACollector(cd.path)
     sdac.run_tests()
