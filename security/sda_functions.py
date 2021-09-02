@@ -158,7 +158,6 @@ def standard_SDA(
     # get all the recipient count of the rounds, where alice is involved
     # and normalize then for each round
     o = [np.array(t[1])/np.sum(np.array(t[1])) for t in observation_list if t[0][alice_indx] >= 1]
-    print(np.sum(o, axis=0)/len(o))
 
     # make u to a numpy array
     u = np.array(u)
