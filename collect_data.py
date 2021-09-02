@@ -19,8 +19,8 @@ class CollectData(object):
         nr_users_range = [50, 100, 200, 500],
         random_graph_range = [True, False],
         cover_traffic_range = [(True, 0.5), (True, 1.0), (False, 1.0)],
-        nr_messages = 10,
-        nr_simulations_per_setup = 1000
+        nr_messages = 1000,
+        nr_simulations_per_setup = 5
     ):
 
         self.nr_users_range = nr_users_range
